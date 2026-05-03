@@ -68,6 +68,25 @@ const CREATE_PAYROLL_RECORDS_TABLE = `
   END
 `;
 
+const CREATE_EMPLOYEE_FILES_TABLE = `
+  IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'employee_files')
+  BEGIN
+    CREATE TABLE employee_files (
+      id INT IDENTITY(1,1) PRIMARY KEY,
+      employee_id INT NOT NULL REFERENCES employees(id),
+      file_name NVARCHAR(255) NOT NULL,
+      blob_name NVARCHAR(500) NOT NULL,
+      content_type NVARCHAR(100),
+      file_size INT,
+      category NVARCHAR(50),
+      memo NVARCHAR(500),
+      uploaded_by NVARCHAR(100),
+      uploaded_at DATETIME DEFAULT GETDATE()
+    );
+    CREATE INDEX ix_employee_files_employee_id ON employee_files(employee_id);
+  END
+`;
+
 const CREATE_BONUS_RECORDS_TABLE = `
   IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'bonus_records')
   BEGIN
@@ -110,10 +129,11 @@ export async function POST(request: NextRequest) {
     await executeRawSql(CREATE_EMPLOYEES_TABLE);
     await executeRawSql(CREATE_PAYROLL_RECORDS_TABLE);
     await executeRawSql(CREATE_BONUS_RECORDS_TABLE);
+    await executeRawSql(CREATE_EMPLOYEE_FILES_TABLE);
 
     return NextResponse.json({
       message: "Database tables initialized successfully",
-      tables: ["employees", "payroll_records", "bonus_records"],
+      tables: ["employees", "payroll_records", "bonus_records", "employee_files"],
     });
   } catch (error) {
     console.error("Failed to initialize database:", error);

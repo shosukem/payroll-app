@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import EmployeeForm from '@/components/EmployeeForm';
+import EmployeeFilesModal from '@/components/EmployeeFilesModal';
 
 interface Employee {
   id: string;
@@ -41,6 +42,7 @@ export default function EmployeesPage() {
   const [showForm, setShowForm] = useState(false);
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filesEmployee, setFilesEmployee] = useState<Employee | null>(null);
 
   useEffect(() => {
     fetchEmployees();
@@ -173,12 +175,18 @@ export default function EmployeesPage() {
                         <span className="badge-inactive">退職</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-6 py-4 text-center space-x-3">
                       <button
                         onClick={() => setShowForm(true)}
                         className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
                         編集
+                      </button>
+                      <button
+                        onClick={() => setFilesEmployee(employee)}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        ファイル
                       </button>
                     </td>
                   </tr>
@@ -204,6 +212,15 @@ export default function EmployeesPage() {
           onClose={() => setShowForm(false)}
           onSubmit={handleFormSubmit}
           isLoading={isFormSubmitting}
+        />
+      )}
+
+      {/* Files Modal */}
+      {filesEmployee && (
+        <EmployeeFilesModal
+          employeeId={Number(filesEmployee.id)}
+          employeeName={`${filesEmployee.lastName} ${filesEmployee.firstName}`}
+          onClose={() => setFilesEmployee(null)}
         />
       )}
     </div>

@@ -56,7 +56,44 @@ curl -X POST http://localhost:3000/api/db/init \
   -H "Authorization: Bearer your-secret"
 ```
 
-### 5. 開発サーバー起動
+### 5. Azure Blob Storage 設定（従業員添付ファイル）
+
+雇用契約書・身分証など従業員ごとの添付ファイルを Blob Storage に保存します。
+
+1. **ストレージアカウント** を作成（例: `payrollstorage`）
+   - 冗長性: LRS（開発用）
+   - アクセス層: ホット
+2. **コンテナーは自動作成** されます（既定名: `employee-files`）
+
+#### 本番（推奨: マネージドID）
+
+App Service にシステム割り当てマネージドIDを有効化し、ストレージアカウントの IAM で
+**Storage Blob Data Contributor** ロールを付与:
+
+```bash
+# App Service にマネージドIDを有効化
+az webapp identity assign --name payroll-app --resource-group rg-payroll
+
+# プリンシパルIDを取得してロール割り当て
+PRINCIPAL_ID=$(az webapp identity show --name payroll-app --resource-group rg-payroll --query principalId -o tsv)
+STORAGE_ID=$(az storage account show --name payrollstorage --resource-group rg-payroll --query id -o tsv)
+az role assignment create \
+  --assignee $PRINCIPAL_ID \
+  --role "Storage Blob Data Contributor" \
+  --scope $STORAGE_ID
+
+# App Service にストレージアカウント名を設定
+az webapp config appsettings set --name payroll-app --resource-group rg-payroll --settings \
+  AZURE_STORAGE_ACCOUNT=payrollstorage \
+  AZURE_STORAGE_CONTAINER=employee-files
+```
+
+#### ローカル開発
+
+`az login` 済みなら `AZURE_STORAGE_ACCOUNT` だけで動作します（`DefaultAzureCredential`）。
+接続文字列で動かしたい場合は `.env.local` に `AZURE_STORAGE_CONNECTION_STRING` を設定。
+
+### 6. 開発サーバー起動
 
 ```bash
 npm run dev
@@ -82,6 +119,7 @@ http://localhost:3000 でアクセス
    - `AZURE_SQL_PASSWORD`
 4. App Service の「構成」→「アプリケーション設定」に環境変数を追加:
    - `AZURE_SQL_SERVER`, `AZURE_SQL_DATABASE`, `AZURE_SQL_USER`, `AZURE_SQL_PASSWORD`, `AZURE_SQL_PORT`
+   - `AZURE_STORAGE_ACCOUNT`, `AZURE_STORAGE_CONTAINER`（Blob Storage 利用時）
 5. `main` ブランチに push すると自動デプロイ
 
 ### 方法2: Azure CLI

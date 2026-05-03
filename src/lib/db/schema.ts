@@ -72,6 +72,19 @@ export const payrollRecords = mssqlTable("payroll_records", {
   createdAt: datetime("created_at").defaultCurrentTimestamp(),
 });
 
+export const employeeFiles = mssqlTable("employee_files", {
+  id: int("id").primaryKey().identity(),
+  employeeId: int("employee_id").notNull().references(() => employees.id),
+  fileName: varchar("file_name", { length: 255 }).notNull(),
+  blobName: varchar("blob_name", { length: 500 }).notNull(),
+  contentType: varchar("content_type", { length: 100 }),
+  fileSize: int("file_size"),
+  category: varchar("category", { length: 50 }),
+  memo: varchar("memo", { length: 500 }),
+  uploadedBy: varchar("uploaded_by", { length: 100 }),
+  uploadedAt: datetime("uploaded_at").defaultCurrentTimestamp(),
+});
+
 export const bonusRecords = mssqlTable("bonus_records", {
   id: int("id").primaryKey().identity(),
   employeeId: int("employee_id").notNull().references(() => employees.id),
